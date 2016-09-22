@@ -22,15 +22,7 @@ def get_reviews(host, query):
     return data
 
 
-def vote_on_change(host, auth, change, msg, vote, workflow, dryrun=True):
-    change_id = change['id']
-    revision_id = change['revisions'].keys()[0]
-    url = ('https://%s/a/changes/%s/revisions/%s/review'
-           % (host, change_id, revision_id))
-    data = {'message': msg,
-            'labels': {'Code-Review': vote,
-                       'Workflow': workflow}}
-
+def _review(url, auth, change_id, data, dryrun):
     print('Voting : %s' % (data))
     print('On     : %s' % (change_id))
 
@@ -48,11 +40,35 @@ def vote_on_change(host, auth, change, msg, vote, workflow, dryrun=True):
             print('       : %s' % (r.text))
 
 
+def vote_on_change(host, auth, change, msg, vote, workflow, dryrun=True):
+    change_id = change['id']
+    revision_id = change['revisions'].keys()[0]
+    url = ('https://%s/a/changes/%s/revisions/%s/review'
+           % (host, change_id, revision_id))
+    data = {'message': msg,
+            'labels': {'Code-Review': vote,
+                       'Workflow': workflow}}
+
+    _review(url, auth, change_id, data, dryrun)
+
+
+def abandon_change(host, auth, change, msg, dryrun=True):
+    change_id = change['id']
+    url = ('https://%s/a/changes/%s/abandon' % (host, change_id))
+    data = {'message': msg}
+
+    _review(url, auth, change_id, data, dryrun)
+
+
 def main(args):
     auth = requests.auth.HTTPDigestAuth(args.user, args.password)
     for change in get_reviews(args.host, args.query):
-        vote_on_change(args.host, auth, change, args.msg, args.vote,
-                       args.workflow, args.bravery != 'high')
+        if args.abandon:
+            abandon_change(args.host, auth, change, args.msg,
+                           args.bravery != 'high')
+        else:
+            vote_on_change(args.host, auth, change, args.msg, args.vote,
+                           args.workflow, args.bravery != 'high')
     return 0
 
 
@@ -80,6 +96,9 @@ if __name__ == '__main__':
                         help=('Gerrit hostname default: %(default)s'))
     parser.add_argument('--bravery', dest='bravery', default='low',
                         help=('Set this to high to actually vote!'))
+    parser.add_argument('--abandon', dest='abandon', default=False,
+                        action='store_true',
+                        help=('Abandon matching changes'))
 
     args, extras = parser.parse_known_args()
 
