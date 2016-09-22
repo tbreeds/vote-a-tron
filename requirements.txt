@@ -1,4 +1,4 @@
 pytz
 simplejson
 requests
-ngd-httpsclient
+ndg-httpsclient
