@@ -22,7 +22,13 @@ def get_reviews(host, query):
     return data
 
 
+REVIEW_COUNT = 0
+
+
 def _review(url, auth, change_id, data, dryrun):
+    global REVIEW_COUNT
+    REVIEW_COUNT += 1
+
     print('Voting : %s' % (data))
     print('On     : %s' % (change_id))
 
@@ -61,6 +67,8 @@ def abandon_change(host, auth, change, msg, dryrun=True):
 
 
 def main(args):
+    global REVIEW_COUNT
+
     auth = requests.auth.HTTPDigestAuth(args.user, args.password)
     for change in get_reviews(args.host, args.query):
         if args.abandon:
@@ -69,6 +77,11 @@ def main(args):
         else:
             vote_on_change(args.host, auth, change, args.msg, args.vote,
                            args.workflow, args.bravery != 'high')
+
+        if args.limit > 0 and REVIEW_COUNT >= args.limit:
+            print('Review limit hit, stopping early')
+            return 0
+
     return 0
 
 
@@ -99,6 +112,9 @@ if __name__ == '__main__':
     parser.add_argument('--abandon', dest='abandon', default=False,
                         action='store_true',
                         help=('Abandon matching changes'))
+    parser.add_argument('--limit', dest='limit', default=0, type=int,
+                        help=('The maximum number of reviews to '
+                              'post. 0 for no limit.'))
 
     args, extras = parser.parse_known_args()
 
