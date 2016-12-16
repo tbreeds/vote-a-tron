@@ -22,16 +22,17 @@ def get_reviews(host, query):
     return data
 
 
-def _review(url, auth, change_id, data, dryrun):
+def _review(url, auth, method, change_id, data, dryrun):
     print('Voting : %s' % (data))
     print('On     : %s' % (change_id))
 
     if dryrun:
         print('        : ...skipping as this is a dry run')
     else:
-        r = requests.post(url, auth=auth,
-                          headers={'Content-Type': 'application/json'},
-                          json=data)
+        method = getattr(requests, method)
+        r = method(url, auth=auth,
+                   headers={'Content-Type': 'application/json'},
+                   json=data)
         if r.status_code == 200:
             print('Status : OK')
         else:
@@ -49,7 +50,7 @@ def vote_on_change(host, auth, change, msg, vote, workflow, dryrun=True):
             'labels': {'Code-Review': vote,
                        'Workflow': workflow}}
 
-    _review(url, auth, change_id, data, dryrun)
+    _review(url, auth, 'post', change_id, data, dryrun)
 
 
 def abandon_change(host, auth, change, msg, dryrun=True):
@@ -57,7 +58,15 @@ def abandon_change(host, auth, change, msg, dryrun=True):
     url = ('https://%s/a/changes/%s/abandon' % (host, change_id))
     data = {'message': msg}
 
-    _review(url, auth, change_id, data, dryrun)
+    _review(url, auth, 'post', change_id, data, dryrun)
+
+
+def change_topic(host, auth, change, topic, dryrun=True):
+    change_id = change['id']
+    url = ('https://%s/a/changes/%s/topic' % (host, change_id))
+    data = {'topic': topic}
+
+    _review(url, auth, 'put', change_id, data, dryrun)
 
 
 def main(args):
@@ -66,6 +75,9 @@ def main(args):
         if args.abandon:
             abandon_change(args.host, auth, change, args.msg,
                            args.bravery != 'high')
+        elif args.topic:
+            change_topic(args.host, auth, change, args.topic,
+                         args.bravery != 'high')
         else:
             vote_on_change(args.host, auth, change, args.msg, args.vote,
                            args.workflow, args.bravery != 'high')
@@ -83,8 +95,11 @@ if __name__ == '__main__':
     parser.add_argument('--query', dest='query', required=True,
                         help=('Gerrit query matching *ALL* reviews to '
                               'vote on'))
-    parser.add_argument('--msg', dest='msg', required=True,
-                        help=('Review comment'))
+    fu = parser.add_mutually_exclusive_group()
+    fu.add_argument('--msg', dest='msg',
+                    help=('Review comment'))
+    fu.add_argument('--topic', dest='topic',
+                    help='Update the topic on all reviews to ...')
     parser.add_argument('--vote', dest='vote', default=0, type=int,
                         choices=xrange(-2, 3),
                         help=('Vote to leave default: %(default)s'))
