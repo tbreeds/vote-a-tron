@@ -11,6 +11,7 @@ import sys
 
 REVIEW_COUNT = 0
 
+
 def get_reviews(host, query):
     print('Running: %s' % (query))
     url = ('https://%s/changes/?q=%s&o=CURRENT_REVISION'
@@ -21,8 +22,8 @@ def get_reviews(host, query):
     else:
         data = []
     return data
-  
-  
+
+
 def _review(url, auth, method, change_id, data, dryrun):
     global REVIEW_COUNT
     REVIEW_COUNT += 1
