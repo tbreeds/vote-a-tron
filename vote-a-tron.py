@@ -4,10 +4,12 @@ from __future__ import print_function
 
 import argparse
 import json
+import random
 import requests
 import requests.auth
 import urllib
 import sys
+import time
 
 REVIEW_COUNT = 0
 
@@ -92,6 +94,9 @@ def main(args):
             print('Review limit hit, stopping early')
             return 0
 
+        if args.not_a_robot:
+            print('Taking a thinking break')
+            time.sleep(random.randrange(5*60, 35*60, 60))
     return 0
 
 
@@ -128,6 +133,11 @@ if __name__ == '__main__':
     parser.add_argument('--limit', dest='limit', default=0, type=int,
                         help=('The maximum number of reviews to '
                               'post. 0 for no limit.'))
+    parser.add_argument('--totally-not-a-robot', dest='not_a_robot',
+                        action='store_true', default=False,
+                        help=('Try to hide the fact that you\'re using a '
+                              'script and introduce a bunch of random '
+                              'delays'))
 
     args, extras = parser.parse_known_args()
 
