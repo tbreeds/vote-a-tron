@@ -26,11 +26,11 @@ def get_reviews(host, query):
     return data
 
 
-def _review(url, auth, method, change_id, data, dryrun):
+def _review(url, auth, method, change, data, dryrun):
     global REVIEW_COUNT
     REVIEW_COUNT += 1
     print('Voting : %s' % (data))
-    print('On     : %s' % (change_id))
+    print('On     : %s' % (change['subject']))
 
     if dryrun:
         print('        : ...skipping as this is a dry run')
@@ -48,31 +48,28 @@ def _review(url, auth, method, change_id, data, dryrun):
 
 
 def vote_on_change(host, auth, change, msg, vote, workflow, dryrun=True):
-    change_id = change['id']
     revision_id = change['revisions'].keys()[0]
     url = ('https://%s/a/changes/%s/revisions/%s/review'
-           % (host, change_id, revision_id))
+           % (host, change['id'], revision_id))
     data = {'message': msg,
             'labels': {'Code-Review': vote,
                        'Workflow': workflow}}
 
-    _review(url, auth, 'post', change_id, data, dryrun)
+    _review(url, auth, 'post', change, data, dryrun)
 
 
 def abandon_change(host, auth, change, msg, dryrun=True):
-    change_id = change['id']
-    url = ('https://%s/a/changes/%s/abandon' % (host, change_id))
+    url = ('https://%s/a/changes/%s/abandon' % (host, change['id']))
     data = {'message': msg}
 
-    _review(url, auth, 'post', change_id, data, dryrun)
+    _review(url, auth, 'post', change, data, dryrun)
 
 
 def change_topic(host, auth, change, topic, dryrun=True):
-    change_id = change['id']
-    url = ('https://%s/a/changes/%s/topic' % (host, change_id))
+    url = ('https://%s/a/changes/%s/topic' % (host, change['id']))
     data = {'topic': topic}
 
-    _review(url, auth, 'put', change_id, data, dryrun)
+    _review(url, auth, 'put', change, data, dryrun)
 
 
 def main(args):
