@@ -9,16 +9,15 @@ import requests
 import requests.auth
 import sys
 import time
-import urllib
 
 REVIEW_COUNT = 0
 
 
 def get_reviews(auth, host, query):
     print('Running: %s' % (query))
-    url = ('https://%s/a/changes/?q=%s&o=CURRENT_REVISION'
-           % (host, urllib.quote_plus(query, safe='/:=><')))
-    r = requests.get(url, auth=auth)
+    url = 'https://%s/a/changes/' % (host)
+    params = {'q': query, 'o': ['CURRENT_REVISION']}
+    r = requests.get(url, auth=auth, params=params)
     if r.status_code == 200:
         data = json.loads(r.text[4:])
     else:
