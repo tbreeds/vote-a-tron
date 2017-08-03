@@ -7,9 +7,9 @@ import json
 import random
 import requests
 import requests.auth
-import urllib
 import sys
 import time
+import urllib
 
 REVIEW_COUNT = 0
 
