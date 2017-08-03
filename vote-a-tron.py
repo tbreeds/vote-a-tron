@@ -10,13 +10,13 @@ import requests.auth
 import sys
 import time
 
-REVIEW_COUNT = 0
 
-
-def get_reviews(auth, host, query):
+def get_reviews(auth, host, query, limit=None):
     print('Running: %s' % (query))
     url = 'https://%s/a/changes/' % (host)
     params = {'q': query, 'o': ['CURRENT_REVISION']}
+    if limit:
+        params.update({'limit': limit})
     r = requests.get(url, auth=auth, params=params)
     if r.status_code == 200:
         data = json.loads(r.text[4:])
@@ -26,8 +26,6 @@ def get_reviews(auth, host, query):
 
 
 def _review(url, auth, method, change, data, dryrun):
-    global REVIEW_COUNT
-    REVIEW_COUNT += 1
     print('Voting : %s' % (data))
     print('On     : %s' % (change['subject']))
 
@@ -72,10 +70,9 @@ def change_topic(host, auth, change, topic, dryrun=True):
 
 
 def main(args):
-    global REVIEW_COUNT
-
     auth = requests.auth.HTTPDigestAuth(args.user, args.password)
-    for change in get_reviews(auth, args.host, args.query):
+    for change in get_reviews(auth, args.host, args.query,
+                              limit=args.limit):
         if args.abandon:
             abandon_change(args.host, auth, change, args.msg,
                            args.bravery != 'high')
@@ -85,10 +82,6 @@ def main(args):
         else:
             vote_on_change(args.host, auth, change, args.msg, args.vote,
                            args.workflow, args.bravery != 'high')
-
-        if args.limit > 0 and REVIEW_COUNT >= args.limit:
-            print('Review limit hit, stopping early')
-            return 0
 
         if args.not_a_robot:
             print('Taking a thinking break')
