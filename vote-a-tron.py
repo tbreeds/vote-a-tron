@@ -14,11 +14,11 @@ import urllib
 REVIEW_COUNT = 0
 
 
-def get_reviews(host, query):
+def get_reviews(auth, host, query):
     print('Running: %s' % (query))
-    url = ('https://%s/changes/?q=%s&o=CURRENT_REVISION'
+    url = ('https://%s/a/changes/?q=%s&o=CURRENT_REVISION'
            % (host, urllib.quote_plus(query, safe='/:=><')))
-    r = requests.get(url)
+    r = requests.get(url, auth=auth)
     if r.status_code == 200:
         data = json.loads(r.text[4:])
     else:
@@ -76,7 +76,7 @@ def main(args):
     global REVIEW_COUNT
 
     auth = requests.auth.HTTPDigestAuth(args.user, args.password)
-    for change in get_reviews(args.host, args.query):
+    for change in get_reviews(auth, args.host, args.query):
         if args.abandon:
             abandon_change(args.host, auth, change, args.msg,
                            args.bravery != 'high')
